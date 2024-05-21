@@ -1,15 +1,22 @@
 import $ from "./FossaQuery.ts";
 
-// $(".hoi")
-//   .find('input[type="checkbox"]')
-//   .setAttribute("checked", "true")
-//   .setAttribute("disabled", "true")
-//   .classList.add("hoi")
-//   .addClass("pietje");
+let inputs = $("input");
+// if (inputs.length > 0) {
+let form = inputs.transform("closest", "form");
+form.forEachFunction((form) => {
+  form.style.border = "1px solid red";
+});
 
-let wow = $(".hoi")
-  .iterate((e: HTMLElement) => (e.innerHTML += "asd"))
-  .iterate((e: HTMLElement) => (e.style.color = "red"))
-  .transformFunction("querySelectorAll", "input")
-  .iterate((e) => (e.style.accentColor = "red"));
-console.log(wow);
+// inputs.forEach("addEventListener", "change");
+console.log(form);
+// }
+
+form.on("submit", (e) => {
+  e.preventDefault();
+  console.log("submitted");
+});
+
+let button = $("button");
+button.on("click", () => {
+  button.toggleClass("test");
+});

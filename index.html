@@ -7,13 +7,24 @@
     <title>Vite + TS</title>
   </head>
   <body>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
-    <div class="hoi"><input type="checkbox" name="" id="" /></div>
+    <form>
+      <label for="name">
+        Name:
+        <input type="text" id="name" name="name" />
+      </label>
+
+      <label for="email">
+        Email:
+        <input type="email" id="email" name="email" />
+      </label>
+
+      <label for="password">
+        Password:
+        <input type="password" id="password" name="password" />
+      </label>
+
+      <button type="submit" value="Submit">Submit</button>
+    </form>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

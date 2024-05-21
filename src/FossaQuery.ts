@@ -10,59 +10,39 @@ interface FossaQueryList {
 
 class FossaQueryList implements FossaQueryList {
   children: HTMLElement[];
+  // length: number;
   constructor(children: HTMLElement[]) {
     this.children = children;
+    // this.length = children.length;
 
-    // let aliasesList = {
-    //   transformFunction: [
-    //     ["querySelectorAll", "find", "querySelector"],
-    //     ["closest"],
-    //   ],
-    //   iterateFunction: [["setAttribute"], ["classList.add", "addClass"]],
-    //   check: [["matches"]],
-    // };
+    this.addClass = (className) =>
+      this.forEachFunction((child) => child.classList.add(className));
 
-    // Object.entries(aliasesList).forEach(([func, aliases]) => {
-    //   aliases.forEach((items) => {
-    //     items = Array.isArray(items) ? items : [items];
-    //     let item = items.shift();
+    this.removeClass = (className) =>
+      this.forEachFunction((child) => child.classList.remove(className));
 
-    //     this[item] = (...args) => this[func](item, ...args);
+    this.toggleClass = (className) =>
+      this.forEachFunction((child) => child.classList.toggle(className));
 
-    //     this.setProperty(item, func);
+    this.closest = (selector) =>
+      this.transformFunction((child) => child.closest(selector));
 
-    //     this.alias(item, items);
-    //   });
-    // });
+    this.setAttribute = (name, value) =>
+      this.forEach("setAttribute", name, value);
 
-    this.find = (selector: string) =>
-      this.transform((e) => e.querySelectorAll(selector));
+    this.on = (event, callback) =>
+      this.forEach("addEventListener", event, callback);
   }
 
-  // bindAttribute(path: string, value: string) {
-  //   let keys = path.split(".");
+  find(selector: string) {
+    return this.transformFunction((child) => child.querySelectorAll(selector));
+  }
 
-  //   for (const key of keys) {
-  //     this.children.forEach((child) => {
-  //       child[key] = child[key] ? child[key] : value;
-  //     });
-  //   }
-  // }
-
-  // setProperty(path: string, func: string) {
-  //   let keys = path.split(".");
-
-  //   let current = this;
-  //   Object.entries(keys).forEach(([i, value]) => {
-  //     if (parseInt(i) === keys.length - 1)
-  //       current[value] = (...args) => this[func](path, ...args);
-  //     if (i < keys.length - 1) {
-  //       this[value] = {};
-  //       current = this[value];
-  //     }
-  //   });
-  //   return this;
-  // }
+  scopedQuerySelectorAll(element: HTMLElement, selector: string) {
+    // replace "> " with ":scope >" on the start of the selector
+    selector = selector.replace(/^>\s/, ":scope > ");
+    return element.querySelectorAll(selector);
+  }
 
   applyFunction(object: any = this, path: string, args: any[]) {
     const keys = path.split(".");
@@ -76,54 +56,79 @@ class FossaQueryList implements FossaQueryList {
     return current.apply(last, args);
   }
 
-  // alias(name: string, aliases: string[]) {
-  //   aliases.forEach((e: string) => {
-  //     this[e] = this[name];
-  //   });
-  // }
-
-  iterate(callback: (child: HTMLElement) => void) {
+  forEachFunction(callback: (child: HTMLElement) => void) {
     this.children.forEach((child) => {
       callback(child);
     });
     return this;
   }
 
-  transform(callback: (child: HTMLElement) => HTMLElement[]) {
+  /**
+   * Takes a callback function and applies it to each child in the list. The output is a new FossaQueryList with the new children.
+   * @param callback The function to apply to each child
+   * @returns A new FossaQueryList with the new children
+   */
+  transformFunction(
+    callback: (child: HTMLElement) => HTMLElement[]
+  ): FossaQueryList {
     let newChildren = new Map();
     this.children.forEach((child) => {
-      callback(child).forEach((result: HTMLElement) => {
+      let items = callback(child);
+
+      // make sure items is an array
+      if (items instanceof HTMLElement) items = [items];
+
+      [...items].forEach((result: HTMLElement) => {
         newChildren.set(result, 1);
       });
     });
+
     return new FossaQueryList([...newChildren.keys()]);
   }
 
-  transformFunction(func: string, ...args: any[]) {
-    return this.transform((child) => {
-      if (!(func in child)) return [child];
+  /**
+   * Takes a function name and arguments and invokes it on each child in the list. The output is a new FossaQueryList with the new children.
+   * @param func The function to apply to each child
+   * @param args The arguments to pass to the function
+   * @returns A new FossaQueryList with the new children
+   */
+  transform(func: string, ...args: any[]) {
+    return this.transformFunction((child) => {
+      if (!(func in child)) return [];
       return child[func](...args);
     });
   }
 
-  // iterateFunction(func: string, ...args: any[]) {
-  //   this.children.forEach((children) => {
-  //     this.applyFunction(children, func, args);
-  //   });
-  //   return this;
-  // }
+  forEach(func: string, ...args: any[]) {
+    this.children.forEach((child) => {
+      if (!(func in child)) return;
+      child[func](...args);
+    });
+    return this;
+  }
 
-  // transformFunction(func: string, ...args: any[]) {
-  //   let newChildren = new Map();
-  //   this.children.forEach((child: { [key: string]: any }) => {
-  //     if (!(func in child)) return;
+  [Symbol.iterator]() {
+    let index = 0;
+    return {
+      next: () => {
+        if (index === this.children.length) {
+          return { done: true };
+        }
+        return {
+          value: this.children[index++],
+          done: false,
+        };
+      },
+    };
+  }
 
-  //     child[func](...args).forEach((result: HTMLElement) => {
-  //       newChildren.set(result, 1);
-  //     });
-  //   });
-  //   return new FossaQueryList([...newChildren.keys()]);
-  // }
+  // Override valueOf to determine the boolean value
+  [Symbol.toPrimitive](hint) {
+    if (hint === "boolean") {
+      return this.children.length > 0;
+    }
+    return this.children.length > 0 ? "1" : "0"; // Fallback for other hints
+  }
 }
 
 export default (selector: string) => {
